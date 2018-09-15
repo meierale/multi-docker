@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t meierale/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run meierale/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t meierale/multi-client ./client
+  - docker build -t meierale/multi-nginx ./nginx
+  - docker build -t meierale/multi-server ./server
+  - docker build -t meierale/multi-worker ./worker
+  # login to docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take images & push them to docker hub
+  - docker push meierale/multi-client
+  - docker push meierale/multi-nginx
+  - docker push meierale/multi-server
+  - docker push meierale/multi-worker
